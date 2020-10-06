@@ -1,8 +1,9 @@
 import os
 import sys
-import time
-import re
 from colorama import Fore
+import time
+import datetime
+import scapy
 
 
 def monitor_mode(interface: str) -> None:
@@ -48,6 +49,21 @@ def handle_user_result():
                  '[2] Perform Defence on Evil Twin Attack \n'
                  'Please select one of the options mentioned above, or write quit to quit the manager\n'.format(
         Fore.BLUE))
+
+
+def channel_changing(interface: str, timeout_seconds: int = 15):
+    """
+    This function changing the channel searching. (to identify networks and clients that uses other channels)
+    :param timeout_seconds: function timeout
+    :param interface: the interface that used to identify the networks / clients. (wlan0 for example)
+    :return:
+    """
+    start_time = datetime.now()
+    channel = 1
+    while (datetime.now() - start_time).seconds < timeout_seconds:
+        channel = (channel + 1) % 14
+        bash('iwconfig {} channel {}'.format(interface, channel))
+        time.sleep(1)
 
 
 def start_evil_twin_attack():
