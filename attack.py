@@ -57,7 +57,8 @@ class Attack:
                                '\"wlan0\" \n')
             self.sniffer = user_input if search(user_input, output) else 'invalid'
             print(self.sniffer)
-            print_regular('Great! Sniffer interface is {}'.format(self.sniffer)) if search(user_input, output) else print_errors(
+            print_regular('Great! Sniffer interface is {}'.format(self.sniffer)) if search(user_input,
+                                                                                           output) else print_errors(
                 'The interface {} is not part of the list, Please insert one of the interfaces above {}\n'.format(
                     user_input, Fore.WHITE))
 
@@ -68,7 +69,8 @@ class Attack:
                                '\"wlan1\" \n')
             self.ap = user_input if search(user_input, output) else 'invalid'
             print_regular(
-                'Great! Fake Access Point interface is {}'.format(self.sniffer)) if search(user_input, output) else print_errors(
+                'Great! Fake Access Point interface is {}'.format(self.sniffer)) if search(user_input,
+                                                                                           output) else print_errors(
                 'The interface {} is not part of the list, Please insert one of the interfaces above {} \n'.format(
                     user_input, Fore.WHITE))
 
@@ -105,6 +107,6 @@ class Attack:
                 return self.get_ap_index()
             elif choice == 'quit':
                 exit_and_cleanup(0, 'GoodBye')
-    def get_client_index:
-        pass
 
+    def get_client_index(self):
+        pass
