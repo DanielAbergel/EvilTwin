@@ -3,7 +3,11 @@ import sys
 from colorama import Fore
 import time
 from datetime import datetime
-import scapy
+import attack
+
+
+def exit_and_cleanup(exit_code, message):
+    sys.exit('{} Perform exit() with exit code {} , {},'.format(Fore.WHITE), exit_code, message)
 
 
 def monitor_mode(interface: str) -> None:
@@ -67,7 +71,12 @@ def channel_changing(interface: str, timeout_seconds: int = 15):
 
 
 def start_evil_twin_attack():
-    pass
+    attack_obj = attack.Attack()
+    ap_index = attack_obj.get_ap_index()
+    ap = attack.get_ap(ap_index)
+    if ap is None:
+        exit_and_cleanup(-1, '{}general error ap is None'.format(Fore.RED))
+    print_regular('Network to Attack : AP Name = {}  MAC Address = {}'.format(ap[0], ap[1]))
 
 
 def manage():

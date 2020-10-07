@@ -4,6 +4,7 @@ from manager import print_errors
 from manager import bash
 from manager import search
 from manager import channel_changing
+from manager import exit_and_cleanup
 from threading import Thread
 from scapy.all import *
 from scapy.layers.dot11 import Dot11, Dot11Beacon, Dot11Elt
@@ -29,6 +30,12 @@ def finding_networks(pkt):
             channel = stats.get("channel")
             ap_list.append([ap_name, mac_address, channel])
             print_regular('Found new Access Point : SSID = {} , MAC = {}'.format(ap_name, mac_address))
+
+
+def get_ap(index: int):
+    if index in range(len(ap_list)):
+        return ap_list[index]
+    return None
 
 
 class Attack:
@@ -61,7 +68,7 @@ class Attack:
 
         print_regular('change {} interface to monitor mode'.format(self.sniffer))
 
-    def scan_networks(self):
+    def get_ap_index(self):
         channel_thread = Thread(target=channel_changing, args=self.sniffer, daemon=True)
         channel_thread.start()
         print_regular('Start Scanning networks , this may take a while...')
@@ -71,8 +78,23 @@ class Attack:
             print('Exception: in function {}'.format(self.scan_networks.__name__), e)
         channel_thread.join()  # waiting for channel switching to end
 
+        print_header('Networks')
         if len(ap_list) > 0:
-            print_header('Networks')
             for index in range(len(ap_list)):
                 print_regular('[{}] AP Name = {}  MAC Address = {}'.format(index, ap_list[index][0], ap_list[index][1]))
-            result = input('Please Choose the Network you want to perform an attack on')
+            index = -1
+            while index == -1:
+                index = input('Please Choose the Network you want to perform an attack on , if you want to explore '
+                              'more network Please type \'Rescan\' for a new networks scan')
+                if index == 'Rescan':
+                    return self.scan_networks()
+                elif index in range(len(ap_list)):
+                    print_errors('Not a valid option please select one of the networks mentioned above')
+                    index = -1
+            return index
+        else:
+            choice = input('No Networks were found , for rescan type \'Rescan\' , to quit type \'quit\'')
+            if choice == 'Rescan':
+                return self.scan_networks()
+            elif choice == 'quit':
+                exit_and_cleanup(0, 'GoodBye')
