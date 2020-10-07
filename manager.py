@@ -2,7 +2,7 @@ import os
 import sys
 from colorama import Fore
 import time
-import datetime
+from datetime import datetime
 import scapy
 
 
