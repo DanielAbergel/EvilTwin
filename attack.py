@@ -52,17 +52,24 @@ class Attack:
         self.sniffer = 'invalid'
         self.ap = 'invalid'
         while self.sniffer == 'invalid':
-            user_input = input('Please enter the interface name that will be used for sniffing , for example \"wlan0\"')
-            search_result = search(user_input, bash('iwconfig'))
+            user_input = input('Please enter the interface name that will be used for sniffing , for example '
+                               '\"wlan0\' \n"')
+            bash('iwconfig > output.txt')
+            with open('output.txt', 'r') as file:
+                data = file.read().replace('\n', '')
+            search_result = search(user_input, data)
             self.sniffer = user_input if search_result else {'invalid'}
             print_regular('Great! Sniffer interface is {}'.format(self.sniffer)) if search_result else print_errors(
                 'The interface {} is not part of the list, Please insert one of the interfaces above'.format(
                     self.sniffer))
 
         while self.ap == 'invalid':
+            bash('iwconfig > output.txt')
+            with open('output.txt', 'r') as file:
+                data = file.read().replace('\n', '')
             user_input = input('Please enter the interface name that will be used for Fake Access Point , for example '
-                               '\"wlan1\"')
-            self.ap = user_input if search(user_input, bash('iwconfig')) else {'invalid'}
+                               '\"wlan1\" \n')
+            self.ap = user_input if search(user_input, data) else {'invalid'}
             print_regular(
                 'Great! Fake Access Point interface is {}'.format(self.sniffer)) if search_result else print_errors(
                 'The interface {} is not part of the list, Please insert one of the interfaces above'.format(
