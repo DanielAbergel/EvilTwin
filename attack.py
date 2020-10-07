@@ -5,7 +5,8 @@ from manager import bash
 from manager import search
 from manager import channel_changing
 from manager import exit_and_cleanup
-from threading import Thread
+from manager import monitor_mode
+from manager import Fore
 from scapy.all import *
 from scapy.layers.dot11 import Dot11, Dot11Beacon, Dot11Elt
 
@@ -47,44 +48,41 @@ class Attack:
         print_header('Prepare the Attack')
         bash('service NetworkManager stop')
         bash('airmon-ng check kill')
-        bash('iwconfig')  # display the interfaces
-        self.ap_list = []
+        output = os.popen('iwconfig').read()
+        print(output)  # display the interfaces
         self.sniffer = 'invalid'
         self.ap = 'invalid'
         while self.sniffer == 'invalid':
             user_input = input('Please enter the interface name that will be used for sniffing , for example '
-                               '\"wlan0\' \n"')
-            bash('iwconfig > output.txt')
-            with open('output.txt', 'r') as file:
-                data = file.read().replace('\n', '')
-            search_result = search(user_input, data)
-            self.sniffer = user_input if search_result else {'invalid'}
-            print_regular('Great! Sniffer interface is {}'.format(self.sniffer)) if search_result else print_errors(
-                'The interface {} is not part of the list, Please insert one of the interfaces above'.format(
-                    self.sniffer))
+                               '\"wlan0\" \n')
+            self.sniffer = user_input if search(user_input, output) else 'invalid'
+            print(self.sniffer)
+            print_regular('Great! Sniffer interface is {}'.format(self.sniffer)) if search(user_input, output) else print_errors(
+                'The interface {} is not part of the list, Please insert one of the interfaces above {}\n'.format(
+                    user_input, Fore.WHITE))
 
+        output = os.popen('iwconfig').read()
+        print(output)  # display the interfaces
         while self.ap == 'invalid':
-            bash('iwconfig > output.txt')
-            with open('output.txt', 'r') as file:
-                data = file.read().replace('\n', '')
             user_input = input('Please enter the interface name that will be used for Fake Access Point , for example '
                                '\"wlan1\" \n')
-            self.ap = user_input if search(user_input, data) else {'invalid'}
+            self.ap = user_input if search(user_input, output) else 'invalid'
             print_regular(
-                'Great! Fake Access Point interface is {}'.format(self.sniffer)) if search_result else print_errors(
-                'The interface {} is not part of the list, Please insert one of the interfaces above'.format(
-                    self.ap))
+                'Great! Fake Access Point interface is {}'.format(self.sniffer)) if search(user_input, output) else print_errors(
+                'The interface {} is not part of the list, Please insert one of the interfaces above {} \n'.format(
+                    user_input, Fore.WHITE))
 
         print_regular('change {} interface to monitor mode'.format(self.sniffer))
+        monitor_mode(self.sniffer)
 
     def get_ap_index(self):
-        channel_thread = Thread(target=channel_changing, args=self.sniffer, daemon=True)
+        channel_thread = Thread(target=channel_changing, args=(self.sniffer, 15), daemon=True)
         channel_thread.start()
         print_regular('Start Scanning networks , this may take a while...')
         try:
             sniff(prn=finding_networks, iface=self.sniffer, timeout=15)
         except UnicodeDecodeError as e:
-            print('Exception: in function {}'.format(self.scan_networks.__name__), e)
+            print('Exception: in function {}'.format(self.get_ap_index.__name__), e)
         channel_thread.join()  # waiting for channel switching to end
 
         print_header('Networks')
@@ -96,14 +94,16 @@ class Attack:
                 index = input('Please Choose the Network you want to perform an attack on , if you want to explore '
                               'more network Please type \'Rescan\' for a new networks scan')
                 if index == 'Rescan':
-                    return self.scan_networks()
+                    return self.get_ap_index()
                 elif index in range(len(ap_list)):
                     print_errors('Not a valid option please select one of the networks mentioned above')
                     index = -1
             return index
         else:
-            choice = input('No Networks were found , for rescan type \'Rescan\' , to quit type \'quit\'')
+            choice = input('No Networks were found , for rescan type \'Rescan\' , to quit type \'quit\' \n')
             if choice == 'Rescan':
-                return self.scan_networks()
+                return self.get_ap_index()
             elif choice == 'quit':
                 exit_and_cleanup(0, 'GoodBye')
+    def get_client_index:
+        

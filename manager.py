@@ -7,7 +7,7 @@ import attack
 
 
 def exit_and_cleanup(exit_code, message):
-    sys.exit('{} Perform exit() with exit code {} , {},'.format(Fore.WHITE), exit_code, message)
+    sys.exit('{} Perform exit() with exit code {} , {}'.format(Fore.WHITE, exit_code, message))
 
 
 def monitor_mode(interface: str) -> None:
@@ -50,12 +50,12 @@ def print_header(message: str):
 
 def handle_user_result():
     return input('{}[1] Perform Evil Twin Attack\n'
-                 '[2] Perform Defence on Evil Twin Attack \n'
+                 '[2] Perform Defence on   Twin Attack \n'
                  'Please select one of the options mentioned above, or write quit to quit the manager\n'.format(
         Fore.BLUE))
 
 
-def channel_changing(interface: str, timeout_seconds: int = 15):
+def channel_changing(interface: str, timeout_seconds):
     """
     This function changing the channel searching. (to identify networks and clients that uses other channels)
     :param timeout_seconds: function timeout
@@ -66,6 +66,7 @@ def channel_changing(interface: str, timeout_seconds: int = 15):
     channel = 1
     while (datetime.now() - start_time).seconds < timeout_seconds:
         channel = (channel + 1) % 14
+        print('ch is {}', channel)
         bash('iwconfig {} channel {}'.format(interface, channel))
         time.sleep(1)
 
