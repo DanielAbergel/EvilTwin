@@ -106,4 +106,5 @@ class Attack:
             elif choice == 'quit':
                 exit_and_cleanup(0, 'GoodBye')
     def get_client_index:
-        
+        pass
+
