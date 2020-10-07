@@ -49,7 +49,9 @@ class Attack:
         bash('airmon-ng check kill')
         bash('iwconfig')  # display the interfaces
         self.ap_list = []
-        while self.sniffer != 'invalid':
+        self.sniffer = 'invalid'
+        self.ap = 'invalid'
+        while self.sniffer == 'invalid':
             user_input = input('Please enter the interface name that will be used for sniffing , for example \"wlan0\"')
             search_result = search(user_input, bash('iwconfig'))
             self.sniffer = user_input if search_result else {'invalid'}
@@ -57,7 +59,7 @@ class Attack:
                 'The interface {} is not part of the list, Please insert one of the interfaces above'.format(
                     self.sniffer))
 
-        while self.ap != 'invalid':
+        while self.ap == 'invalid':
             user_input = input('Please enter the interface name that will be used for Fake Access Point , for example '
                                '\"wlan1\"')
             self.ap = user_input if search(user_input, bash('iwconfig')) else {'invalid'}
