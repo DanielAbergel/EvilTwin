@@ -8,7 +8,14 @@ service dnsmasq stop
 service rpcbind stop
 killall dnsmasq
 killall hostapd
-rm -f hostapd.conf
-rm -f dnsmasq.conf
+rm -f build/hostapd.conf
+rm -f build/dnsmasq.conf
 systemctl enable systemd-resolved.service
 systemctl start systemd-resolved
+ifconfig ${SNIFFER} down
+iwconfig ${SNIFFER} mode managed
+ifconfig ${SNIFFER} up
+ifconfig ${AP} down
+iwconfig ${AP} mode managed
+ifconfig ${AP} up
+service network-manager restart
