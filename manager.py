@@ -4,6 +4,7 @@ from colorama import Fore
 import time
 from datetime import datetime
 import attack
+import defence
 
 
 def exit_and_cleanup(exit_code, message):
@@ -73,6 +74,13 @@ def channel_changing(interface: str, timeout_seconds, channel: int = 1):
         channel = (channel + 1) % 14
         bash('iwconfig {} channel {}'.format(interface, channel))
         time.sleep(1)
+
+
+def start_defence_from_evil_attack():
+    attack_obj = attack.Attack()
+    ap_index = attack_obj.get_ap_index()
+    defence_obj = defence.Defence(attack.get_ap(ap_index))
+    defence_obj.display_problem(attack.ap_list)
 
 
 def start_evil_twin_attack():
