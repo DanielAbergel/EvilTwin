@@ -192,12 +192,25 @@ class Attack:
         print_regular('deauthentication attack start , This may take a while , Please wait....')
         deauthentication_attack_thread.join()
 
-    def create_fake_access_point(self):
+    def create_fake_access_point(self, access_point_bssid):
+        self.prepare_fake_access_point(access_point_bssid)
 
-    def prepare_fake_access_point(self):
-        with open('Templates/hostapd.conf', 'r+') as f:
+    def prepare_fake_access_point(self, access_point_bssid):
+        bash('cp -r Templates build')
+        with open('build/hostapd.conf', 'r+') as f:
             template = Template(f.read())
             f.seek(0)
-            f.write(template.substitute(INTERFACE=self.sniffer,))
+            f.write(template.substitute(INTERFACE=self.sniffer, NETWORK=access_point_bssid))
             f.truncate()
-        bash('sudo ./prepare.sh')
+        with open('build/dnsmasq.conf', 'r+') as f:
+            template = Template(f.read())
+            f.seek(0)
+            f.write(template.substitute(INTERFACE=self.sniffer))
+            f.truncate()
+        with open('build/prepareAP.sh', 'r+') as f:
+            template = Template(f.read())
+            f.seek(0)
+            f.write(template.substitute(INTERFACE=self.sniffer))
+            f.truncate()
+
+        bash('sudo sh build/prepareAP.sh')
