@@ -1,6 +1,6 @@
 # EVIL TWIN ATTACK
-## contributers:
-### Daniel Abergel<br/>Netanel Ben-Isahar
+### contributers:
+Daniel Abergel<br/>Netanel Ben-Isahar
 
 
 
