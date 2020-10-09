@@ -38,6 +38,23 @@ to run the tool just execute the command
 * Ubuntu Linux (Attacker) **In Our enviroment we use Ubuntu 20.04.1 LTS**.
 * The libraries we mentioned above.
 
+## Knowledge
+As part of this tool we used scapy library to perform sniffing and deauthenticating (using Dot11Deauth and RadioTap) 
+users from the network. within this library there is Dot11 packets that will give us information about the packet destenation and sender mac address and more information that we used to perform the attack.
+to create the access point we used hostapd and dnsmaskq tools to redirect the traffic to our getway.
+
+###Links that we used.
+    
+https://www.thepythoncode.com/article/force-a-device-to-disconnect-scapy
+
+https://rootsh3ll.com/evil-twin-attack/
+
+https://linux.die.net/man/8/iwconfig
+
+https://scapy.readthedocs.io/en/latest/api/scapy.layers.dot11.html
+
+
+
 
 
 

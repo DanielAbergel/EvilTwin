@@ -44,7 +44,6 @@ def bash(command: str):
      execute bash command
     :param command represent the bash command we want to execute
     """
-    print('{} {} {}'.format(Fore.YELLOW, command, Fore.WHITE))
     return os.system(command)
 
 
