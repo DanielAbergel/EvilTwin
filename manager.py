@@ -3,6 +3,7 @@ import sys
 from colorama import Fore
 import time
 from datetime import datetime
+from email_handler import send_email
 import attack
 
 

@@ -365,7 +365,6 @@ class Defence:
                 print_regular(
                     '{} BSSID = {} , MAC_ADDRESS = {}\n'.format(index, duplicates[index][0], duplicates[0][1]))
             print_header('Preventing attack')
-            send_email('danielabergel1@gmail.com', duplicates[0][0])
             timer_obj = threading.Timer(2.0, deauthentication_attack_defence,
                                         [ap_list[int(self.ap_index)][1], sniffer_interface])
             timer_obj.start()
