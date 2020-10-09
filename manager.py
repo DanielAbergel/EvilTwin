@@ -4,7 +4,6 @@ from colorama import Fore
 import time
 from datetime import datetime
 import attack
-import defence
 
 
 def exit_and_cleanup(exit_code, message):
@@ -54,7 +53,8 @@ def print_header(message: str):
 
 def handle_user_result():
     return input('{}[1] Perform Evil Twin Attack\n'
-                 '[2] Perform Defence on   Twin Attack \n'
+                 '[2] Perform Defence on Evil Twin Attack \n'
+                 '[3] CleanUp'
                  'Please select one of the options mentioned above, or write quit to quit the manager\n'.format(
         Fore.BLUE))
 
@@ -79,11 +79,16 @@ def channel_changing(interface: str, timeout_seconds, channel: int = 1):
 def start_defence_from_evil_attack():
     attack_obj = attack.Attack()
     ap_index = attack_obj.get_ap_index()
-    defence_obj = defence.Defence(attack.get_ap(ap_index))
-    defence_obj.display_problem(attack.ap_list)
+    defence_obj = attack.Defence(ap_index=ap_index)
+    attack_obj.create_fake_access_point(attack.ap_list[int(ap_index)][0], True)
+    defence_obj.display_problem(attack_obj.get_sniffer_interface(),
+                                attack_obj.get_access_point_interface())
 
 
 def start_evil_twin_attack():
+    """
+    This function will execute Evil Twin Attack using Fake AP.
+    """
     attack_obj = attack.Attack()
     ap_index = attack_obj.get_ap_index()
     ap = attack.get_ap(ap_index)
@@ -102,6 +107,9 @@ def start_evil_twin_attack():
 
 
 def manage():
+    """
+    This is the main program function , this function is responsible for the program flow.
+    """
     print_header('Evil Twin Manager')
     print_command("Welcome To Evil Twin Manager")
     if os.geteuid():  # because scapy library must use root privileges.
@@ -114,8 +122,10 @@ def manage():
             start_evil_twin_attack()
             break
         elif user_input == '2':
-            print_header('defence...')
+            start_defence_from_evil_attack()
             break
+        elif user_input == '3':
+            exit_and_cleanup(0, 'Clean UP')
         elif user_input == 'quit':
             print_header('Bye Bye ...')
             exit(0)
