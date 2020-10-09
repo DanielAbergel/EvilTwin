@@ -7,6 +7,7 @@ from manager import channel_changing
 from manager import exit_and_cleanup
 from manager import monitor_mode
 from manager import Fore
+from email_handler import send_email
 from string import Template
 from password_handler import start_listen
 from scapy.all import *
@@ -60,10 +61,10 @@ def finding_networks(pkt):
 
 def finding_clients_using_ap_mac(pkt):
     """
-        uses for scapy.sniff function. This function gets a packet and check wether the packet includes the AP mac address
-        , if so the function will save the client information into a global list
-        :param pkt: the packet that is sniffer catch
-        :return: void
+    uses for scapy.sniff function. This function gets a packet and check wether the packet includes the AP mac address
+    , if so the function will save the client information into a global list
+    :param pkt: the packet that is sniffer catch
+    :return: void
     """
     if (pkt.addr2 == ap_mac or pkt.addr3 == ap_mac) and pkt.addr1 != "ff:ff:ff:ff:ff:ff":
         if pkt.addr1 not in client_list and pkt.addr2 != pkt.addr1 and pkt.addr1 != pkt.addr3 and pkt.addr1:
@@ -138,6 +139,7 @@ class Attack:
     """
     this class is used for execute an Evil Twin attack ...
     """
+
     def __init__(self):
         """
         prepare the environment - stop all the running network processes
@@ -325,6 +327,7 @@ class Defence:
     """
     This class is used to perform defence from an Evil Twin attack.
     """
+
     def __init__(self, ap_index):
         self.ap_index = ap_index
 
@@ -362,6 +365,7 @@ class Defence:
                 print_regular(
                     '{} BSSID = {} , MAC_ADDRESS = {}\n'.format(index, duplicates[index][0], duplicates[0][1]))
             print_header('Preventing attack')
+            send_email('danielabergel1@gmail.com', duplicates[0][0])
             timer_obj = threading.Timer(2.0, deauthentication_attack_defence,
                                         [ap_list[int(self.ap_index)][1], sniffer_interface])
             timer_obj.start()
